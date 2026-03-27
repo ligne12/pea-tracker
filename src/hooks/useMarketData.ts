@@ -65,13 +65,21 @@ export function useMarketData(transactions: Transaction[]) {
     }
   }, []);
 
-  // Initial fetch if cache is stale
+  // Fetch when transactions change (new ISINs or stale cache)
   useEffect(() => {
-    if (transactions.length > 0) {
-      const cached = loadMarketData();
-      if (!cached || cached.isStale) {
-        refresh(transactions);
-      }
+    if (transactions.length === 0) return;
+    const isins = [...new Set(transactions.map(t => t.isin))];
+    const cached = loadMarketData();
+
+    // Fetch if no cache, stale, or missing ISINs
+    if (!cached || cached.isStale) {
+      refresh(transactions);
+      return;
+    }
+    const cachedIsins = new Set(Object.keys(cached.prices));
+    const missing = isins.some(isin => !cachedIsins.has(isin));
+    if (missing) {
+      refresh(transactions);
     }
   }, [transactions, refresh]);
 
@@ -93,12 +101,18 @@ export function useMarketData(transactions: Transaction[]) {
     };
   }, [transactions, refresh]);
 
-  // Compute "time ago" string
+  // Live "time ago" — re-renders every 30s
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
   const getLastRefreshLabel = useCallback((): string => {
     if (!lastRefresh) return '';
     const diffMs = Date.now() - lastRefresh;
     const diffMin = Math.floor(diffMs / 60000);
-    if (diffMin < 1) return "à l'instant";
+    if (diffMin < 1) return `maj ${new Date(lastRefresh).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     if (diffMin < 60) return `il y a ${diffMin} min`;
     const diffH = Math.floor(diffMin / 60);
     return `il y a ${diffH}h${diffMin % 60 > 0 ? String(diffMin % 60).padStart(2, '0') : ''}`;

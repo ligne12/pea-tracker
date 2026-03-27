@@ -2,14 +2,24 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Search, Loader2 } from 'lucide-react';
 import type { Transaction } from '@/lib/types';
 import { ISIN_TO_NAME, ISIN_TO_TICKER } from '@/lib/types';
-import { searchSecurities, type SearchResult } from '@/lib/market-data';
+import { searchSecurities, fetchCurrentPrice, type SearchResult } from '@/lib/market-data';
 import { generateId, cn } from '@/lib/utils';
+
+function nowDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function nowTime() {
+  return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
 interface TransactionFormProps {
   transaction?: Transaction | null;
   onSave: (transaction: Transaction) => void;
   onClose: () => void;
 }
+
+const COMMISSION_RATE = 0.005; // 0.5% Bourso PEA
 
 interface Suggestion {
   isin: string;
@@ -31,8 +41,9 @@ export function TransactionForm({ transaction, onSave, onClose }: TransactionFor
   const isEdit = !!transaction;
 
   const [type, setType] = useState<'ACHAT' | 'VENTE'>(transaction?.type ?? 'ACHAT');
-  const [date, setDate] = useState(transaction?.date ?? new Date().toISOString().slice(0, 10));
-  const [time, setTime] = useState(transaction?.time ?? '09:00:00');
+  const [date, setDate] = useState(transaction?.date ?? nowDate());
+  const [time, setTime] = useState(transaction?.time ?? nowTime());
+  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
   const [isin, setIsin] = useState(transaction?.isin ?? '');
   const [name, setName] = useState(transaction?.name ?? '');
   const [ticker, setTicker] = useState('');
@@ -101,12 +112,50 @@ export function TransactionForm({ transaction, onSave, onClose }: TransactionFor
     debounceRef.current = setTimeout(() => doSearch(value), 300);
   };
 
-  const selectSuggestion = (entry: Suggestion) => {
-    setIsin(entry.isin || entry.ticker);
+  const selectSuggestion = async (entry: Suggestion) => {
+    const selectedIsin = entry.isin || entry.ticker;
+    setIsin(selectedIsin);
     setName(entry.name);
     setTicker(entry.ticker);
     setSearchQuery(entry.name);
     setShowSuggestions(false);
+
+    // Auto-fill date + time to now
+    if (!isEdit) {
+      setDate(nowDate());
+      setTime(nowTime());
+    }
+
+    // Auto-fetch current price
+    const isinForPrice = entry.isin || '';
+    const tickerForPrice = entry.ticker;
+    setIsFetchingPrice(true);
+    try {
+      // Try by ISIN first, fallback to ticker
+      let currentPrice = isinForPrice ? await fetchCurrentPrice(isinForPrice) : null;
+      if (currentPrice === null && tickerForPrice) {
+        // Direct fetch by ticker
+        const res = await fetch(`/api/yahoo/v8/finance/chart/${tickerForPrice}?range=1d&interval=1d`);
+        if (res.ok) {
+          const data = await res.json();
+          const closes = data.chart?.result?.[0]?.indicators?.quote?.[0]?.close ?? [];
+          for (let i = closes.length - 1; i >= 0; i--) {
+            if (closes[i] !== null) { currentPrice = closes[i]; break; }
+          }
+          // Fallback to regularMarketPrice from meta
+          if (currentPrice === null) {
+            currentPrice = data.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
+          }
+        }
+      }
+      if (currentPrice !== null) {
+        setPrice(String(Math.round(currentPrice * 100) / 100));
+      }
+    } catch {
+      // silent — user can fill manually
+    } finally {
+      setIsFetchingPrice(false);
+    }
   };
 
   // Close dropdown on outside click
@@ -120,12 +169,12 @@ export function TransactionForm({ transaction, onSave, onClose }: TransactionFor
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Auto-commission estimation (0.5% for Bourso PEA)
+  // Auto-commission 0.5%
   useEffect(() => {
-    if (!isEdit && grossAmount > 0 && commission === '') {
-      setCommission(String(Math.round(grossAmount * 0.005 * 100) / 100));
+    if (!isEdit && grossAmount > 0) {
+      setCommission(String(Math.round(grossAmount * COMMISSION_RATE * 100) / 100));
     }
-  }, [grossAmount, isEdit, commission]);
+  }, [grossAmount, isEdit]);
 
   const isValid = (isin.length >= 2 || ticker.length >= 2) && qty > 0 && prc > 0 && date;
 
@@ -156,7 +205,7 @@ export function TransactionForm({ transaction, onSave, onClose }: TransactionFor
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-lg bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl"
+        className="w-full max-w-lg bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -287,14 +336,16 @@ export function TransactionForm({ transaction, onSave, onClose }: TransactionFor
               />
             </div>
             <div>
-              <label className="block text-xs text-zinc-500 mb-1">Cours (EUR)</label>
+              <label className="block text-xs text-zinc-500 mb-1">
+                Cours (EUR) {isFetchingPrice && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
+              </label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 value={price}
                 onChange={e => setPrice(e.target.value)}
-                placeholder="81.18"
+                placeholder={isFetchingPrice ? 'Chargement...' : '81.18'}
                 className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none"
               />
             </div>

@@ -52,9 +52,9 @@ function Card({ label, value, subValue, subColor, icon, accent = 'default', glow
 }
 
 export function KPICards({ metrics }: KPICardsProps) {
-  const gainAccent = metrics.totalGain !== null
-    ? (metrics.totalGain >= 0 ? 'positive' : 'negative') as const
-    : 'default' as const;
+  const gainAccent: 'default' | 'positive' | 'negative' = metrics.totalGain !== null
+    ? (metrics.totalGain >= 0 ? 'positive' : 'negative')
+    : 'default';
 
   const gainGlow = metrics.totalGain !== null
     ? (metrics.totalGain >= 0 ? 'glow-green' : 'glow-red')
@@ -106,8 +106,8 @@ export function KPICards({ metrics }: KPICardsProps) {
             ? <TrendingUp className="w-4 h-4" />
             : <TrendingDown className="w-4 h-4" />}
           accent={metrics.totalGainExFees !== null
-            ? (metrics.totalGainExFees >= 0 ? 'positive' : 'negative') as const
-            : 'default' as const}
+            ? (metrics.totalGainExFees >= 0 ? 'positive' : 'negative')
+            : 'default'}
         />
       </div>
 
