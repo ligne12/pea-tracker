@@ -1,4 +1,5 @@
-import { TrendingUp, TrendingDown, Wallet, BarChart3, Coins, Hash, Activity, Timer } from 'lucide-react';
+import { useState } from 'react';
+import { TrendingUp, TrendingDown, Wallet, BarChart3, Coins, Hash, Activity, Timer, Info } from 'lucide-react';
 import type { PortfolioMetrics } from '@/lib/types';
 import { formatCurrency, formatPercent, cn, gainColor } from '@/lib/utils';
 
@@ -14,17 +15,37 @@ interface CardProps {
   icon: React.ReactNode;
   accent?: 'default' | 'positive' | 'negative';
   glowClass?: string;
+  tooltip?: string;
 }
 
-function Card({ label, value, subValue, subColor, icon, accent = 'default', glowClass }: CardProps) {
+function Card({ label, value, subValue, subColor, icon, accent = 'default', glowClass, tooltip }: CardProps) {
+  const [showTip, setShowTip] = useState(false);
   return (
-    <div className={cn(
-      'rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-4 sm:p-5 transition-all duration-300',
-      'hover:border-zinc-700/80 hover:bg-zinc-900/80',
+    <div
+      className={cn(
+        'rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-4 sm:p-5 transition-all duration-300',
+      'hover:border-zinc-700/80 hover:bg-zinc-900/80 relative',
       glowClass
     )}>
       <div className="flex items-center justify-between mb-2.5">
-        <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider leading-tight">{label}</span>
+        <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider leading-tight flex items-center gap-1">
+          {label}
+          {tooltip && (
+            <span
+              className="relative cursor-help"
+              onMouseEnter={() => setShowTip(true)}
+              onMouseLeave={() => setShowTip(false)}
+              onClick={() => setShowTip(!showTip)}
+            >
+              <Info className="w-3 h-3 text-zinc-600 hover:text-zinc-400 transition-colors" />
+              {showTip && (
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-[11px] text-zinc-300 font-normal normal-case tracking-normal leading-relaxed shadow-lg z-50 pointer-events-none">
+                  {tooltip}
+                </span>
+              )}
+            </span>
+          )}
+        </span>
         <div className={cn(
           'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
           accent === 'positive' && 'bg-emerald-500/10 text-emerald-400',
@@ -135,6 +156,7 @@ export function KPICards({ metrics }: KPICardsProps) {
           label="XIRR"
           value={metrics.xirr !== null ? formatPercent(metrics.xirr) : '\u2014'}
           subValue="Rdt. pondéré"
+          tooltip="Taux de rendement interne annualisé — tient compte du montant et du timing de chaque investissement"
           icon={<Activity className="w-4 h-4" />}
           accent={metrics.xirr !== null ? (metrics.xirr >= 0 ? 'positive' : 'negative') : 'default'}
         />
@@ -143,6 +165,7 @@ export function KPICards({ metrics }: KPICardsProps) {
           label="TWR"
           value={metrics.twr !== null ? formatPercent(metrics.twr) : '\u2014'}
           subValue="Rdt. annualisé"
+          tooltip="Rendement pondéré dans le temps — mesure la performance pure du sous-jacent, indépendamment des flux"
           icon={<Timer className="w-4 h-4" />}
           accent={metrics.twr !== null ? (metrics.twr >= 0 ? 'positive' : 'negative') : 'default'}
         />

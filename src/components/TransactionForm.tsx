@@ -248,7 +248,7 @@ export function TransactionForm({ transaction, onSave, onClose }: TransactionFor
                 type="date"
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none"
+                className="w-full min-w-0 box-border appearance-none px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none"
               />
             </div>
             <div>
@@ -258,7 +258,7 @@ export function TransactionForm({ transaction, onSave, onClose }: TransactionFor
                 step="1"
                 value={time}
                 onChange={e => setTime(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none"
+                className="w-full min-w-0 box-border appearance-none px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none"
               />
             </div>
           </div>

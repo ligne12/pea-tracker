@@ -222,7 +222,6 @@ export default function App() {
                   <span className={cn('text-[10px]', statusColor)}>{statusLabel}</span>
                 </div>
               )}
-              {!hasData && <p className="text-[10px] text-zinc-600 -mt-0.5 hidden sm:block">BoursoBank</p>}
             </div>
           </div>
 

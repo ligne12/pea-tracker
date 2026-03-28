@@ -166,6 +166,20 @@ body {
 .light .recharts-tooltip-label { color: #18181b !important; }
 .light .recharts-tooltip-item { color: #52525b !important; }
 
+/* iOS input normalization */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 38px;
+  min-width: 0;
+  width: 100% !important;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 /* Recharts tooltip custom */
 .recharts-default-tooltip {
   background: #18181b !important;

@@ -83,7 +83,15 @@ export function DCAChart({ dcaData, transactions }: DCAChartProps) {
 
       {/* PRU Evolution */}
       <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-5">
-        <h3 className="text-sm font-medium text-zinc-400 mb-4">PRU vs Cours d'achat</h3>
+        <h3 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-1.5">
+          PRU vs Cours d'achat
+          <span className="relative group cursor-help">
+            <svg className="w-3.5 h-3.5 text-zinc-600 group-hover:text-zinc-400 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-[11px] text-zinc-300 font-normal leading-relaxed shadow-lg z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Prix de Revient Unitaire moyen comparé au cours au moment de chaque achat
+            </span>
+          </span>
+        </h3>
         <div className="h-[250px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={pruData}>
