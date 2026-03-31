@@ -184,12 +184,7 @@ export default function App() {
   const dcaData = computeDCAData(transactions);
   const hasData = transactions.length > 0;
 
-  // Get market data for the first (or only) position
-  const firstPosition = metrics.positions[0];
-  const chartData = firstPosition ? (marketDataMap[firstPosition.isin] ?? []) : [];
-  const chartTransactions = firstPosition
-    ? transactions.filter(t => t.isin === firstPosition.isin)
-    : [];
+  const hasPositions = metrics.positions.length > 0;
 
   // Market status indicator
   const statusColor = {
@@ -352,11 +347,11 @@ export default function App() {
           <div className="space-y-4">
             <KPICards metrics={metrics} />
 
-            {firstPosition && (
+            {hasPositions && (
               <PriceChart
-                marketData={chartData}
-                transactions={chartTransactions}
-                title={firstPosition.name}
+                positions={metrics.positions}
+                transactions={transactions}
+                marketDataMap={marketDataMap}
               />
             )}
 
