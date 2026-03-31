@@ -36,7 +36,7 @@ export function PriceChart({ positions, transactions, marketDataMap }: PriceChar
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Timeframe
   const [timeframe, setTimeframe] = useState<TimeframeRange>('2y');
