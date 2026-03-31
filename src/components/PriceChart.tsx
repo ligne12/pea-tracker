@@ -128,8 +128,14 @@ export function PriceChart({ positions, transactions, marketDataMap }: PriceChar
   const selectedPosition = positions.find(p => p.isin === selectedIsin);
   const selectedName = selectedPosition?.name ?? selectedIsin;
 
-  // Filter transactions for selected asset
-  const filteredTransactions = transactions.filter(t => t.isin === selectedIsin);
+  // Filter transactions for selected asset AND visible timeframe
+  const filteredTransactions = transactions.filter(t => {
+    if (t.isin !== selectedIsin) return false;
+    if (chartData.length === 0) return true;
+    const startDate = chartData[0].time;
+    const endDate = chartData[chartData.length - 1].time;
+    return t.date >= startDate && t.date <= endDate;
+  });
 
   // ─── Chart rendering ───
   useEffect(() => {
